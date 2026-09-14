@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Birthday</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep: #170F26;
+    --bg-glow: #38215A;
+    --cream: #F6ECDF;
+    --rose: #E9A9BC;
+    --gold: #E6C88A;
+    --glass: rgba(255,255,255,0.06);
+    --glass-border: rgba(255,255,255,0.16);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background: radial-gradient(ellipse at 50% 20%, var(--bg-glow), var(--bg-deep) 65%);
+    color: var(--cream);
+    font-family:'Poppins', sans-serif;
+    overflow:hidden;
+    position:relative;
+  }
+  h1,h2{ font-family:'Playfair Display', serif; margin:0; font-weight:600; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+  }
+
+  /* ---------- Starfield & hearts (shared background) ---------- */
+  .stars{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      radial-gradient(1.6px 1.6px at 12% 18%, rgba(255,255,255,.8), transparent),
+      radial-gradient(1.6px 1.6px at 78% 24%, rgba(255,255,255,.7), transparent),
+      radial-gradient(1.2px 1.2px at 34% 62%, rgba(255,255,255,.6), transparent),
+      radial-gradient(1.2px 1.2px at 88% 72%, rgba(255,255,255,.55), transparent),
+      radial-gradient(1.6px 1.6px at 55% 42%, rgba(255,255,255,.65), transparent),
+      radial-gradient(1.2px 1.2px at 6% 82%, rgba(255,255,255,.5), transparent),
+      radial-gradient(1.2px 1.2px at 65% 90%, rgba(255,255,255,.5), transparent);
+    background-repeat:no-repeat;
+    animation: twinkle 4s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle{ from{ opacity:.6; } to{ opacity:1; } }
+
+  .hearts{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+  .hearts span{
+    position:absolute; bottom:-40px; font-size:14px; color: var(--rose);
+    opacity:.55; animation: floatUp linear infinite;
+  }
+  .hearts span:nth-child(1){ left:10%; animation-duration:14s; animation-delay:0s; }
+  .hearts span:nth-child(2){ left:30%; animation-duration:18s; animation-delay:3s; font-size:10px; }
+  .hearts span:nth-child(3){ left:55%; animation-duration:16s; animation-delay:6s; }
+  .hearts span:nth-child(4){ left:75%; animation-duration:20s; animation-delay:1.5s; font-size:11px; }
+  .hearts span:nth-child(5){ left:90%; animation-duration:15s; animation-delay:8s; }
+  @keyframes floatUp{
+    0%{ transform: translateY(0); opacity:0; }
+    10%{ opacity:.55; }
+    90%{ opacity:.4; }
+    100%{ transform: translateY(-100vh); opacity:0; }
+  }
+
+  /* ---------- Stage / scenes ---------- */
+  .stage{ position:relative; width:100%; height:100vh; z-index:2; }
+  .scene{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding: 32px 20px;
+    opacity:0; transform: translateY(14px) scale(.99);
+    pointer-events:none;
+    transition: opacity .7s ease, transform .7s ease;
+    overflow-y:auto;
+  }
+  .scene.active{ opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+
+  .eyebrow{
+    font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+    color: var(--gold); margin-bottom:14px;
+    display:flex; align-items:center; gap:8px; justify-content:center;
+  }
+  .eyebrow::before, .eyebrow::after{ content:"♦"; font-size:.6rem; opacity:.7; }
+
+  .scene h1{ font-size: clamp(1.9rem, 6vw, 3.2rem); font-style:italic; text-shadow: 0 0 26px rgba(233,169,188,.35); }
+  .scene h2{ font-size: clamp(1.6rem, 5vw, 2.4rem); font-style:italic; text-shadow: 0 0 26px rgba(233,169,188,.3); }
+  .scene .sub{ margin-top:12px; font-size:.95rem; color: rgba(246,236,223,.75); max-width:420px; font-style:italic; font-family:'Playfair Display',serif; }
+
+  .btn{
+    margin-top:32px; padding:11px 28px; border-radius:999px;
+    border:1px solid var(--glass-border); background: var(--glass);
+    color: var(--cream); font-family:'Poppins',sans-serif; font-size:.75rem;
+    letter-spacing:.1em; text-transform:uppercase; cursor:pointer;
+    backdrop-filter: blur(6px);
+    transition: background .25s ease, border-color .25s ease, transform .15s ease;
+  }
+  .btn:hover:not(:disabled){ background: rgba(255,255,255,.12); border-color: var(--gold); transform: translateY(-1px); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn:focus-visible{ outline:2px solid var(--gold); outline-offset:3px; }
+  .skip{
+    margin-top:16px; background:none; border:none; color: rgba(246,236,223,.4);
+    font-size:.72rem; text-decoration:underline; cursor:pointer; font-family:'Poppins',sans-serif;
+  }
+
+  /* ---------- Countdown ---------- */
+  .timer{ display:flex; gap:16px; margin-top:30px; flex-wrap:wrap; justify-content:center; }
+  .timer .box{
+    background: var(--glass); border:1px solid var(--glass-border); border-radius:14px;
+    padding:14px 18px; min-width:74px; backdrop-filter: blur(6px);
+  }
+  .timer .box .n{ font-family:'Playfair Display', serif; font-size:1.8rem; font-weight:700; }
+  .timer .box .l{ font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color: rgba(246,236,223,.6); margin-top:2px; }
+
+  /* ---------- Gift ---------- */
+  .gift{
+    font-size: 5rem; cursor:pointer; user-select:none;
+    filter: drop-shadow(0 0 24px rgba(233,169,188,.4));
+    animation: bounce 2.4s ease-in-out infinite;
+    background:none; border:none;
+  }
+  @keyframes bounce{ 0%,100%{ transform: translateY(0) rotate(0deg);} 50%{ transform: translateY(-10px) rotate(-3deg);} }
+
+  /* ---------- Cover polaroids ---------- */
+  .cover-poly{ position:absolute; width:110px; padding:8px 8px 22px; background:#fdf6ec; box-shadow: 5px 6px 16px rgba(0,0,0,.35); z-index:1; }
+  .cover-poly .ph{ height:96px; border-radius:2px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; }
+  .cp1{ top:10%; left:6%; transform: rotate(-9deg); }
+  .cp2{ top:14%; right:7%; transform: rotate(7deg); }
+  .cp3{ bottom:12%; left:9%; transform: rotate(6deg); }
+  @media (max-width:640px){ .cover-poly{ width:80px; } .cover-poly .ph{ height:68px; } }
+
+  /* ---------- Letter card ---------- */
+  .card{
+    background: var(--glass); border:1px solid var(--glass-border); border-radius:20px;
+    padding: 28px 26px; max-width:520px; backdrop-filter: blur(10px);
+    box-shadow: 0 20px 50px rgba(0,0,0,.3);
+  }
+  .card p{ font-size:.92rem; line-height:1.85; color: rgba(246,236,223,.9); margin:0 0 14px; }
+  .card p:last-child{ margin-bottom:0; }
+
+  /* ---------- Gallery ---------- */
+  .gallery{
+    display:grid; grid-template-columns: repeat(4, 1fr); gap:16px;
+    max-width: 760px; margin-top: 10px;
+  }
+  .poly{ background:#fdf6ec; padding:7px 7px 18px; box-shadow: 4px 5px 12px rgba(0,0,0,.3); }
+  .poly .ph{
+    height:90px; border-radius:2px; display:flex; align-items:center; justify-content:center; font-size:1.5rem;
+  }
+  .poly:nth-child(4n+1){ transform: rotate(-4deg); }
+  .poly:nth-child(4n+2){ transform: rotate(3deg); }
+  .poly:nth-child(4n+3){ transform: rotate(-2deg); }
+  .poly:nth-child(4n+4){ transform: rotate(5deg); }
+  @media (max-width:640px){ .gallery{ grid-template-columns: repeat(2,1fr); max-width:320px; } }
+
+  /* ---------- Video ---------- */
+  .video-box{
+  width: min(340px, 80vw); aspect-ratio: 9/16; border-radius:16px; overflow:hidden;
+  background: linear-gradient(135deg, #4a2c63, #7a3f5c);
+  display:flex; align-items:center; justify-content:center; position:relative;
+  border:1px solid var(--glass-border); margin-top:6px;
+}
+  
+  .video-box video{ width:100%; height:100%; object-fit:cover; }
+  .video-placeholder{ text-align:center; padding:20px; }
+  .video-placeholder .play{ font-size:2.2rem; }
+  .video-placeholder p{ font-size:.78rem; color: rgba(246,236,223,.7); margin-top:8px; }
+
+  /* ---------- Final ---------- */
+  #finalHeading{ min-height: 1.3em; }
+  #finalHeading .cursor{ animation: blink 1s step-end infinite; }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  .progress{
+    position:fixed; top:0; left:0; right:0; z-index:5; display:flex; gap:4px; padding:10px 16px;
+  }
+  .progress span{ flex:1; height:3px; border-radius:99px; background: rgba(255,255,255,.15); overflow:hidden; }
+  .progress span i{ display:block; height:100%; width:0%; background: var(--gold); transition: width .4s ease; }
+</style>
+</head>
+<body>
+
+<div class="stars"></div>
+<div class="hearts"><span>♥</span><span>♥</span><span>♥</span><span>♥</span><span>♥</span></div>
+<div class="progress" id="progress"></div>
+
+<div class="stage" id="stage">
+
+  <section class="scene" data-scene="countdown">
+    <p class="eyebrow">Menghitung Hari</p>
+    <h1 id="countdownTitle">Hari Spesial Segera Tiba</h1>
+    <p class="sub">Sesuatu yang indah sedang menunggumu</p>
+    <div class="timer">
+      <div class="box"><div class="n" id="d">00</div><div class="l">Hari</div></div>
+      <div class="box"><div class="n" id="h">00</div><div class="l">Jam</div></div>
+      <div class="box"><div class="n" id="m">00</div><div class="l">Menit</div></div>
+      <div class="box"><div class="n" id="s">00</div><div class="l">Detik</div></div>
+    </div>
+    <button class="btn" id="unlockBtn" disabled>Tunggu Sampai Waktunya</button>
+    <button class="skip" id="skipBtn">lewati hitung mundur →</button>
+  </section>
+
+  <section class="scene" data-scene="gift">
+    <p class="eyebrow">Ada Sesuatu Untukmu</p>
+    <button class="gift" id="giftBtn" aria-label="Buka hadiah">🎁</button>
+    <p class="sub" style="margin-top:22px;">klik untuk membuka hadiahmu</p>
+  </section>
+
+  <section class="scene" data-scene="cover">
+    <div class="cover-poly cp1"><div class="ph"><img src="foto 1.jpeg" style="width:100%;height:100%;object-fit:cover;"></div></div>
+<div class="cover-poly cp2"><div class="ph"><img src="foto 2.jpeg" style="width:100%;height:100%;object-fit:cover;"></div></div>
+<div class="cover-poly cp3"><div class="ph"><img src="foto 3.jpeg" style="width:100%;height:100%;object-fit:cover;"></div></div>
+    <p class="eyebrow">A Love Letter For You</p>
+    <h1>Your Special Day</h1>
+    <p class="sub">Dibuat dengan cinta, khusus untukmu</p>
+    <button class="btn nextBtn">Baca Suratku →</button>
+  </section>
+
+  <section class="scene" data-scene="letter">
+    <p class="eyebrow">Sebuah Surat Untukmu</p>
+    <h2>Happy Birthday</h2>
+    <div class="card" id="letterCard" style="margin-top:22px;"></div>
+    <button class="btn nextBtn">Lihat Kenangan Kita →</button>
+  </section>
+
+  <section class="scene" data-scene="gallery">
+    <p class="eyebrow">Kenangan Kita</p>
+    <h2 style="margin-bottom:18px;">Our Memories</h2>
+    <div class="gallery" id="galleryGrid"></div>
+    <button class="btn nextBtn">Lanjut →</button>
+  </section>
+
+  <section class="scene" data-scene="video">
+    <p class="eyebrow">Pesan Video Spesial</p>
+    <h2>A Moment For You</h2>
+    <div class="video-box" id="videoBox">
+      <div class="video-placeholder">
+        <div class="play">▶</div>
+        <p>tambahkan file video di CONFIG.videoSrc</p>
+      </div>
+    </div>
+    <button class="btn nextBtn">Baca Ucapanku →</button>
+  </section>
+
+  <section class="scene" data-scene="wishes">
+    <p class="eyebrow">Birthday Wishes</p>
+    <div class="card" id="wishesCard"></div>
+    <button class="btn nextBtn">Satu Hal Lagi →</button>
+  </section>
+
+  <section class="scene" data-scene="final">
+    <h1 id="finalHeading"></h1>
+    <p class="sub" id="finalSub" style="opacity:0; transition: opacity 1s ease;"></p>
+    <p class="sub" id="finalSign" style="opacity:0; transition: opacity 1s ease;"></p>
+    <button class="btn" id="replayBtn" style="opacity:0; transition: opacity 1s ease;">↺ Ulangi Dari Awal</button>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =====================================================
+     CONFIG — ganti bagian ini sesuai kebutuhanmu
+     ===================================================== */
+  const CONFIG = {
+    recipientName: "Sayang",
+    senderName: "Aku",
+    // tanggal & jam target hitung mundur (format: "YYYY-MM-DDTHH:MM:SS")
+    targetDate: "2026-09-15T12:00:00",
+
+    letterParagraphs: [
+      "Di umur yang baru ini, aku cuma mau doain semoga semua hal baik selalu datang ke hidupmu.",
+      "Semoga sehat selalu, panjang umur, dimudahkan segala urusannya, dan semua impianmu bisa tercapai satu per satu.",
+      "Tetap jadi pribadi yang kuat, baik, dan hebat seperti sekarang ya. Jangan lupa kalau aku selalu ada buatmu dalam keadaan apa pun.",
+      "Sekali lagi, selamat ulang tahun. Semoga hari ini penuh kebahagiaan dan tahun ini jadi tahun terbaikmu."
+    ],
+
+    // isi dengan { src: "n" } untuk foto asli, atau { emoji: "📷" } untuk placeholder
+    photos: [
+  { src: "foto 4.jpeg" },
+  { src: "foto 5.jpeg" },
+  { src: "foto 6.jpeg" },
+  { src: "foto 7.jpeg" },
+  { src: "foto 8.jpeg" },
+  { src: "foto 9.jpeg" },
+  { src: "foto 10.jpeg" },
+  { src: "foto 11.jpeg" },
+  { src: "foto 12.jpeg" },
+  { src: "foto 14.jpeg" },
+  { src: "foto 13.jpeg" },
+  { src: "foto 15.jpeg" }
+],
+    // isi dengan path video (mp4) kalau ada, kosongkan untuk placeholder
+    videoSrc: "video 2.mp4",
+
+    wishesTitle: "Happy Birthday, my love",
+    wishesText: `Aku cuma mau bilang, semoga di umur baru ini kamu selalu dikelilingi hal-hal baik. Semoga kamu tetap sehat, makin bahagia, semua yang kamu pengenin bisa pelan-pelan terwujud, dan setiap langkahmu selalu dipermudah.
+Semoga hari-harimu ke depannya lebih banyak senyumnya daripada sedihnya. Kalau nanti ada hari yang terasa berat, semoga kamu selalu punya alasan buat tetap kuat dan semangat.
+Makasih ya, udah hadir dan jadi salah satu bagian paling berarti dalam hidupku. Semoga kita masih bisa terus berbagi cerita, ketawa bareng, dan bikin banyak kenangan indah lagi.`,
+
+    finalSub: "Terima kasih sudah jadi bagian dari hidupku. Semoga hadiah kecil ini bikin hari spesialmu makin berkesan.",
+    finalSign: "Selalu milikmu."
+  };
+
+  /* ===================================================== */
+
+  const scenes = Array.from(document.querySelectorAll('.scene'));
+  const progressWrap = document.getElementById('progress');
+  scenes.forEach(function(){
+    var s = document.createElement('span');
+    s.innerHTML = '<i></i>';
+    progressWrap.appendChild(s);
+  });
+  const progressBars = progressWrap.querySelectorAll('i');
+
+  let current = 0;
+  function showScene(index){
+    scenes[current].classList.remove('active');
+    current = index;
+    scenes[current].classList.add('active');
+    progressBars.forEach(function(bar, i){
+      bar.style.width = i <= current ? '100%' : '0%';
+    });
+    if (scenes[current].dataset.scene === 'final') runFinal();
+  }
+  function nextScene(){
+    if (current < scenes.length - 1) showScene(current + 1);
+  }
+  document.querySelectorAll('.nextBtn').forEach(function(btn){
+    btn.addEventListener('click', nextScene);
+  });
+  showScene(0);
+
+  // ---------- Countdown ----------
+  const target = new Date(CONFIG.targetDate).getTime();
+  const dEl = document.getElementById('d'), hEl = document.getElementById('h'),
+        mEl = document.getElementById('m'), sEl = document.getElementById('s');
+  const unlockBtn = document.getElementById('unlockBtn');
+
+  function pad(n){ return String(n).padStart(2, '0'); }
+
+  let countdownTimer;
+  function tickCountdown(){
+    const diff = target - Date.now();
+    if (diff <= 0){
+      dEl.textContent = hEl.textContent = mEl.textContent = sEl.textContent = '00';
+      unlockBtn.disabled = false;
+      unlockBtn.textContent = 'Buka Kejutannya →';
+      clearInterval(countdownTimer);
+      return;
+    }
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+    dEl.textContent = pad(days); hEl.textContent = pad(hours);
+    mEl.textContent = pad(mins); sEl.textContent = pad(secs);
+  }
+  tickCountdown();
+  countdownTimer = setInterval(tickCountdown, 1000);
+
+  unlockBtn.addEventListener('click', function(){
+    if (!unlockBtn.disabled) nextScene();
+  });
+  document.getElementById('skipBtn').addEventListener('click', nextScene);
+
+  // ---------- Gift ----------
+  document.getElementById('giftBtn').addEventListener('click', nextScene);
+
+  // ---------- Letter ----------
+  const letterCard = document.getElementById('letterCard');
+  CONFIG.letterParagraphs.forEach(function(text){
+    var p = document.createElement('p');
+    p.textContent = text;
+    letterCard.appendChild(p);
+  });
+
+  // ---------- Gallery ----------
+  const galleryGrid = document.getElementById('galleryGrid');
+  const gradients = [
+    'linear-gradient(135deg,#E9A9BC,#E6C88A)', 'linear-gradient(135deg,#8A6FBF,#E9A9BC)',
+    'linear-gradient(135deg,#E6C88A,#8A6FBF)', 'linear-gradient(135deg,#7a3f5c,#E9A9BC)'
+  ];
+  CONFIG.photos.forEach(function(photo, i){
+    var wrap = document.createElement('div');
+    wrap.className = 'poly';
+    var ph = document.createElement('div');
+    ph.className = 'ph';
+    if (photo.src){
+      var img = document.createElement('img');
+      img.src = photo.src;
+      img.alt = '';
+      img.style.width = '100%'; img.style.height = '100%'; img.style.objectFit = 'cover';
+      ph.appendChild(img);
+    } else {
+      ph.style.background = gradients[i % gradients.length];
+      ph.textContent = photo.emoji || '📷';
+    }
+    wrap.appendChild(ph);
+    galleryGrid.appendChild(wrap);
+  });
+
+  // ---------- Video ----------
+  if (CONFIG.videoSrc){
+    var videoBox = document.getElementById('videoBox');
+    videoBox.innerHTML = '';
+    var video = document.createElement('video');
+    video.src = CONFIG.videoSrc;
+    video.controls = true;
+    videoBox.appendChild(video);
+  }
+
+  // ---------- Wishes ----------
+  const wishesCard = document.getElementById('wishesCard');
+  var wTitle = document.createElement('h2');
+  wTitle.style.fontSize = '1.3rem';
+  wTitle.style.marginBottom = '14px';
+  wTitle.textContent = CONFIG.wishesTitle;
+  var wText = document.createElement('p');
+  wText.textContent = CONFIG.wishesText;
+  wishesCard.appendChild(wTitle);
+  wishesCard.appendChild(wText);
+
+  // ---------- Final ----------
+  let finalDone = false;
+  function runFinal(){
+    if (finalDone) return;
+    finalDone = true;
+    const heading = document.getElementById('finalHeading');
+    const full = 'Happy Birthday';
+    let i = 0;
+    heading.innerHTML = '<span class="cursor">|</span>';
+    const typeTimer = setInterval(function(){
+      i++;
+      heading.innerHTML = full.slice(0, i) + '<span class="cursor">|</span>';
+      if (i >= full.length){
+        clearInterval(typeTimer);
+        setTimeout(function(){
+          document.getElementById('finalSub').textContent = CONFIG.finalSub;
+          document.getElementById('finalSub').style.opacity = '1';
+        }, 300);
+        setTimeout(function(){
+          document.getElementById('finalSign').textContent = CONFIG.finalSign;
+          document.getElementById('finalSign').style.opacity = '1';
+        }, 900);
+        setTimeout(function(){
+          document.getElementById('replayBtn').style.opacity = '1';
+        }, 1400);
+      }
+    }, 90);
+  }
+
+  document.getElementById('replayBtn').addEventListener('click', function(){
+    finalDone = false;
+    showScene(0);
+  });
+
+})();
+</script>
+
+</body>
+</html>
